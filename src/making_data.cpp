@@ -57,8 +57,8 @@ public:
 	ros::NodeHandle n;
 	ros::Publisher pub;
 	ros::Subscriber sub1,sub2,sub3;
-	int judge_angular=0,judge_camera=0,NUMBER=0;
-	double pre_data,THETA,DELTA_THETA,NUM,X,Y;
+	int judge_angular=0,judge_camera=0,NUMBER=0,EXP;
+	double pre_data,DATE,THETA,DELTA_THETA,NUM,X,Y;
 	void callback_init(const std_msgs::Float64MultiArray &init_value);
 	void callback_getting_angular(const std_msgs::Float64MultiArray &angular_data);
 	void imageCallback(const sensor_msgs::ImageConstPtr& msg);
@@ -76,7 +76,7 @@ void SubPub::callback_getting_angular(const std_msgs::Float64MultiArray &angular
 		pre_data = angular_data.data[2];
 		//ROS_INFO("%lf",pre_data);
 		judge_angular = 0;
-		cv::waitKey(2000);
+		cv::waitKey(1000);
 	}
 }
 
@@ -92,6 +92,8 @@ void SubPub::imageCallback(const sensor_msgs::ImageConstPtr& msg_image){
 		}
 
 		std::string file_name_image("/home/ubuntu/image_data/image");
+		file_name_image += std::to_string(EXP);
+		file_name_image += "_";
 		file_name_image += std::to_string(NUMBER);
 		file_name_image += ".png";
 
@@ -114,19 +116,21 @@ void SubPub::callback_init(const std_msgs::Float64MultiArray &init_value){
 	//motor on
 	set_power(1);
 	std_msgs::Float64 msg_theta;
-	msg_theta.data = init_value.data[0]*pi/180;
+	msg_theta.data = init_value.data[2]*pi/180;
 	//pre_data = msg_theta.data;
-
-	THETA = init_value.data[0];
-	DELTA_THETA = init_value.data[1];
-	NUM = init_value.data[2];
-	X = init_value.data[3];
-	Y = init_value.data[4];
+	
+	DATE = init_value.data[0]; //22070501
+	EXP = init_value.data[1];
+	THETA = init_value.data[2];
+	DELTA_THETA = init_value.data[3];
+	NUM = init_value.data[4];
+	X = init_value.data[5];
+	Y = init_value.data[6];
 
 	
 	//(2)decide omega t  of motor
 	int TIME = 200;
-	double Vrot = init_value.data[1]*pi*1000/(180*double(TIME));
+	double Vrot = init_value.data[3]*pi*1000/(180*double(TIME));
 	freqs.left_hz = -int(400*Vrot/pi);
 	freqs.right_hz = -freqs.left_hz;
 	//(3)camera on
@@ -148,10 +152,10 @@ void SubPub::callback_init(const std_msgs::Float64MultiArray &init_value){
 		msg_theta.data = pre_data;
 
 		//(9)save_data
-		writing_file << i << "\t" << X << "\t" << Y << "\t"<< pre_data<<std::endl;
+		writing_file << DATE<< "\t" << EXP <<"\t" << i << "\t" << X << "\t" << Y << "\t"<< pre_data<<std::endl;
 
 		//(10)break time
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		//std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	}
 	//(11)finish motor off and camera off
 	set_power(0);
