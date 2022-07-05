@@ -28,8 +28,8 @@ void set_power(int n){
 }
 
 void file_write(wheel_speed_freqs freqs){
-	freqs.left_hz = 0;
-	freqs.right_hz = 0;
+	//freqs.left_hz = 0;
+	//freqs.right_hz = 0;
 
 	std::ofstream writing_file_left;
 	std::ofstream writing_file_right;
@@ -57,8 +57,8 @@ public:
 	ros::NodeHandle n;
 	ros::Publisher pub;
 	ros::Subscriber sub1,sub2,sub3;
-	int judge_angular=0,judge_camera=0;
-	double pre_data,THETA,DELTA_THETA,NUM,X,Y,NUMBER=0;
+	int judge_angular=0,judge_camera=0,NUMBER=0;
+	double pre_data,THETA,DELTA_THETA,NUM,X,Y;
 	void callback_init(const std_msgs::Float64MultiArray &init_value);
 	void callback_getting_angular(const std_msgs::Float64MultiArray &angular_data);
 	void imageCallback(const sensor_msgs::ImageConstPtr& msg);
@@ -74,15 +74,15 @@ public:
 void SubPub::callback_getting_angular(const std_msgs::Float64MultiArray &angular_data){
 	if(judge_angular==1){
 		pre_data = angular_data.data[2];
-		ROS_INFO("%lf",pre_data);
+		//ROS_INFO("%lf",pre_data);
 		judge_angular = 0;
+		cv::waitKey(2000);
 	}
 }
 
 void SubPub::imageCallback(const sensor_msgs::ImageConstPtr& msg_image){
 	if(judge_camera==1){
 		cv_bridge::CvImagePtr cv_ptr;
-		//cv::waitKey(1000);
 		try{
 			cv_ptr = cv_bridge::toCvCopy(msg_image, sensor_msgs::image_encodings::BGR8);
 		}
@@ -90,9 +90,15 @@ void SubPub::imageCallback(const sensor_msgs::ImageConstPtr& msg_image){
 			ROS_ERROR("error");
 			exit(-1);
 		}
-		cv::imwrite("/home/ubuntu/image_data/image0.png",cv_ptr->image);
+
+		std::string file_name_image("/home/ubuntu/image_data/image");
+		file_name_image += std::to_string(NUMBER);
+		file_name_image += ".png";
+
+		cv::imwrite(file_name_image,cv_ptr->image);
 		cv::waitKey(10);
 		judge_camera = 0;
+		NUMBER+=1;
 	}
 }
 
@@ -135,7 +141,7 @@ void SubPub::callback_init(const std_msgs::Float64MultiArray &init_value){
 		judge_angular = 1;
 		judge_camera = 1;
 		ros::spinOnce();
-		ROS_INFO("%lf",pre_data);
+		//ROS_INFO("%lf",pre_data);
 		//(7)get camera data 
 
 		//(8)pre_pose start->(5)
