@@ -57,8 +57,8 @@ public:
 	ros::NodeHandle n;
 	ros::Publisher pub;
 	ros::Subscriber sub1,sub2,sub3;
-	int judge_angular=0,judge_camera=0,NUMBER=0,EXP;
-	double pre_data,DATE,THETA,DELTA_THETA,NUM,X,Y;
+	int judge_angular=0,judge_camera=0,NUMBER=0,DATE,EXP;
+	double pre_data,THETA,DELTA_THETA,NUM,X,Y;
 	void callback_init(const std_msgs::Float64MultiArray &init_value);
 	void callback_getting_angular(const std_msgs::Float64MultiArray &angular_data);
 	void imageCallback(const sensor_msgs::ImageConstPtr& msg);
@@ -90,14 +90,11 @@ void SubPub::imageCallback(const sensor_msgs::ImageConstPtr& msg_image){
 			ROS_ERROR("error");
 			exit(-1);
 		}
-
+		
+		std::stringstream ss;
 		std::string file_name_image("/home/ubuntu/image_data/image");
-		file_name_image += std::to_string(EXP);
-		file_name_image += "_";
-		file_name_image += std::to_string(NUMBER);
-		file_name_image += ".png";
-
-		cv::imwrite(file_name_image,cv_ptr->image);
+		ss << file_name_image << "_" << std::to_string(DATE) << "_" << std::to_string(EXP) << "_" << std::to_string(NUMBER) << ".png";
+		cv::imwrite(ss.str(),cv_ptr->image);
 		cv::waitKey(10);
 		judge_camera = 0;
 		NUMBER+=1;
@@ -119,10 +116,10 @@ void SubPub::callback_init(const std_msgs::Float64MultiArray &init_value){
 	msg_theta.data = init_value.data[2]*pi/180;
 	//pre_data = msg_theta.data;
 	
-	DATE = init_value.data[0]; //22070501
-	EXP = init_value.data[1];
-	THETA = init_value.data[2];
-	DELTA_THETA = init_value.data[3];
+	DATE = init_value.data[0]; //220705
+	EXP = init_value.data[1]; //01
+	THETA = init_value.data[2]*pi/180;
+	DELTA_THETA = init_value.data[3]*pi/180;
 	NUM = init_value.data[4];
 	X = init_value.data[5];
 	Y = init_value.data[6];
@@ -130,7 +127,7 @@ void SubPub::callback_init(const std_msgs::Float64MultiArray &init_value){
 	
 	//(2)decide omega t  of motor
 	int TIME = 200;
-	double Vrot = init_value.data[3]*pi*1000/(180*double(TIME));
+	double Vrot = DELTA_THETA*1000/(double(TIME));
 	freqs.left_hz = -int(400*Vrot/pi);
 	freqs.right_hz = -freqs.left_hz;
 	//(3)camera on
@@ -150,6 +147,9 @@ void SubPub::callback_init(const std_msgs::Float64MultiArray &init_value){
 
 		//(8)pre_pose start->(5)
 		msg_theta.data = pre_data;
+		Vrot = (THETA+DELTA_THETA*(i+2)-pre_data)*1000/(double(TIME));
+		freqs.left_hz = -int(400*Vrot/pi);
+		freqs.right_hz = -freqs.left_hz;
 
 		//(9)save_data
 		writing_file << DATE<< "\t" << EXP <<"\t" << i << "\t" << X << "\t" << Y << "\t"<< pre_data<<std::endl;
