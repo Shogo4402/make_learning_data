@@ -12,12 +12,12 @@
 #include "std_msgs/Float64MultiArray.h"
 
 const double  pi = 3.141592653589793238462;
+int NO = 0;
 
 struct wheel_speed_freqs {
 	int left_hz;
 	int right_hz;
 };
-
 
 void set_power(int n){
 	std::ofstream writing_file; 
@@ -30,7 +30,6 @@ void set_power(int n){
 void file_write(wheel_speed_freqs freqs){
 	//freqs.left_hz = 0;
 	//freqs.right_hz = 0;
-
 	std::ofstream writing_file_left;
 	std::ofstream writing_file_right;
 	std::string filename_left = "/dev/rtmotor_raw_l0";
@@ -57,7 +56,7 @@ public:
 	ros::NodeHandle n;
 	ros::Publisher pub;
 	ros::Subscriber sub1,sub2,sub3;
-	int judge_angular=0,judge_camera=0,NUMBER=0,DATE,EXP;
+	int judge_angular=0,judge_camera=0,NUMBER=0,DATE,SET;
 	double pre_data,THETA,DELTA_THETA,NUM,X,Y;
 	void callback_init(const std_msgs::Float64MultiArray &init_value);
 	void callback_getting_angular(const std_msgs::Float64MultiArray &angular_data);
@@ -74,7 +73,6 @@ public:
 void SubPub::callback_getting_angular(const std_msgs::Float64MultiArray &angular_data){
 	if(judge_angular==1){
 		pre_data = angular_data.data[2];
-		//ROS_INFO("%lf",pre_data);
 		judge_angular = 0;
 		cv::waitKey(1000);
 	}
@@ -90,14 +88,14 @@ void SubPub::imageCallback(const sensor_msgs::ImageConstPtr& msg_image){
 			ROS_ERROR("error");
 			exit(-1);
 		}
-		
+	
 		std::stringstream ss;
 		std::string file_name_image("/home/ubuntu/image_data/image");
-		ss << file_name_image << "_" << std::to_string(DATE) << "_" << std::to_string(EXP) << "_" << std::to_string(NUMBER) << ".png";
+		ss << file_name_image << "_" << std::to_string(DATE) << "_" << std::to_string(SET) << "_" << std::to_string(NO) << ".png";
 		cv::imwrite(ss.str(),cv_ptr->image);
 		cv::waitKey(10);
 		judge_camera = 0;
-		NUMBER+=1;
+		NO+=1;
 	}
 }
 
@@ -105,59 +103,44 @@ void SubPub::callback_init(const std_msgs::Float64MultiArray &init_value){
 	//declear 
 	int i;
 	wheel_speed_freqs freqs;
-
-	std::ofstream writing_file;
-        std::string filename = "/home/ubuntu/text_files/sample.txt";
-        writing_file.open(filename, std::ios::app);
-	//(1)input data favorite pose(start_theta,delta_theta,x,y)
-	//motor on
-	set_power(1);
 	std_msgs::Float64 msg_theta;
 	msg_theta.data = init_value.data[2]*pi/180;
-	//pre_data = msg_theta.data;
-	
+	int TIME = 200;
+	double Vrot;
 	DATE = init_value.data[0]; //220705
-	EXP = init_value.data[1]; //01
+	SET = init_value.data[1]; //01
 	THETA = init_value.data[2]*pi/180;
 	DELTA_THETA = init_value.data[3]*pi/180;
 	NUM = init_value.data[4];
 	X = init_value.data[5];
 	Y = init_value.data[6];
+	std::ofstream writing_file;
+        std::string filename = "/home/ubuntu/text_files/sample.txt";
+        writing_file.open(filename, std::ios::app);
 
-	
-	//(2)decide omega t  of motor
-	int TIME = 200;
-	double Vrot = DELTA_THETA*1000/(double(TIME));
-	freqs.left_hz = -int(400*Vrot/pi);
-	freqs.right_hz = -freqs.left_hz;
-	//(3)camera on
-		
-	for(i=0;i<int(NUM);i++){
-		//(4)imu_offset off
+	//motor on
+	set_power(1);
+
+	for(i=0;i<=int(NUM);i++){
+		//decide motor_speed_freqs
+		Vrot = (THETA+DELTA_THETA*(i)-msg_theta.data)*1000/(double(TIME));
+		freqs.left_hz = -int(400*Vrot/pi);
+		freqs.right_hz = -freqs.left_hz;
+		//imu_offset off
 		pub.publish(msg_theta);
-		//(5)motor start & stop
+		//motor start & stop
 		input_raw_freqs(freqs,TIME);
-		
-		//(6)get imu data
+		//get imu data and image of camera
 		judge_angular = 1;
 		judge_camera = 1;
 		ros::spinOnce();
-		//ROS_INFO("%lf",pre_data);
-		//(7)get camera data 
-
-		//(8)pre_pose start->(5)
+		//substitute pre_pose 
 		msg_theta.data = pre_data;
-		Vrot = (THETA+DELTA_THETA*(i+2)-pre_data)*1000/(double(TIME));
-		freqs.left_hz = -int(400*Vrot/pi);
-		freqs.right_hz = -freqs.left_hz;
+		//save_data
+		writing_file << DATE<< "\t" << SET <<"\t" << NO << "\t" << X << "\t" << Y << "\t"<< pre_data<<std::endl;
 
-		//(9)save_data
-		writing_file << DATE<< "\t" << EXP <<"\t" << i << "\t" << X << "\t" << Y << "\t"<< pre_data<<std::endl;
-
-		//(10)break time
-		//std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	}
-	//(11)finish motor off and camera off
+	//finish motor off and file close
 	set_power(0);
 	writing_file.close();
 	
@@ -165,8 +148,6 @@ void SubPub::callback_init(const std_msgs::Float64MultiArray &init_value){
 
 int main(int argc, char** argv){
 	ros::init(argc,argv,"making_data_node");
-	//ros::NodeHandle n;
-	//ros::Subscriber switch_sub = n.subscribe("switch_topic",10,callback);
 	SubPub subpub;
 	ros::spin();
 	return 0;
