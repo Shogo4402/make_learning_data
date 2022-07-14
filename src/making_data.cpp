@@ -66,7 +66,7 @@ public:
 		SubPub::sub1 = n.subscribe("init_info_data",1,&SubPub::callback_init,this);
 		SubPub::pub = n.advertise<std_msgs::Float64>("/pre_pose_topic",1);
 		SubPub::sub2 = n.subscribe("/imu/vel_pos_est",1,&SubPub::callback_getting_angular,this); 
-		SubPub::sub3 = n.subscribe("/usb_cam/image_raw", 1, &SubPub::imageCallback,this);
+		SubPub::sub3 = n.subscribe("image_raw", 1, &SubPub::imageCallback,this);
 	};
 };
 
