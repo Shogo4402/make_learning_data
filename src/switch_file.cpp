@@ -38,16 +38,27 @@ int main(int argc, char** argv){
 
 	ros::init(argc,argv,"switch_node");
 	ros::NodeHandle n;
-	ros::Publisher switch_pub = n.advertise<std_msgs::Int16>("switch_topic",10);
+	ros::Publisher switch_pub = n.advertise<std_msgs::Int16>("switch_topic",1);
 
 	std_msgs::Int16 msg;
 	int sw0,sw1,sw2;
 
 	while(ros::ok()){
+		if(int(get_SW0()==48)){
+			msg.data = 0;
+			switch_pub.publish(msg);
+		}
+		else{
+			msg.data=1;
+			switch_pub.publish(msg);
+		}
+	}
+
+	/*while(ros::ok()){
 		if(int(get_SW0())==48){msg.data=0;switch_pub.publish(msg);}
 		else if(int(get_SW1())==48){msg.data=1;switch_pub.publish(msg);}
 		else if(int(get_SW2())==48){msg.data=2;switch_pub.publish(msg);}
-	}
+	}*/
 
 
 	return 0;
