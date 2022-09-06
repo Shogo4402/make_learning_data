@@ -50,7 +50,7 @@ void SubPub::callback_getting_angular(const std_msgs::Float64MultiArray &angular
 	if(judge2 == 1){
 		pre_data = angular_data.data[2];
 		std::ofstream writing_file;
-		std::string filename = "/home/ubuntu/text_files/sample.txt";
+		std::string filename = "/home/ubuntu/text_files/angluar_file.txt";
 		writing_file.open(filename, std::ios::app);
 		writing_file << pre_data << std::endl;	
 		writing_file.close();

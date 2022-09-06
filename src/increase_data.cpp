@@ -65,20 +65,12 @@ public:
 	SubPub(){
 		SubPub::sub1 = n.subscribe("init_info_data",1,&SubPub::callback_init,this);
 		SubPub::pub = n.advertise<std_msgs::Float64>("/pre_pose_topic",1);
-		SubPub::sub2 = n.subscribe("/imu/vel_pos_est",1,&SubPub::callback_getting_angular,this); 
 		SubPub::sub3 = n.subscribe("image_raw", 1, &SubPub::imageCallback,this);
 	};
 };
 
-void SubPub::callback_getting_angular(const std_msgs::Float64MultiArray &angular_data){
-	if(judge_angular==1){
-		pre_data = angular_data.data[2];
-		judge_angular = 0;
-		cv::waitKey(1500);
-	}
-}
-
 void SubPub::imageCallback(const sensor_msgs::ImageConstPtr& msg_image){
+	cv::waitKey(1500);
 	if(judge_camera==1){
 		cv_bridge::CvImagePtr cv_ptr;
 		try{
@@ -90,12 +82,11 @@ void SubPub::imageCallback(const sensor_msgs::ImageConstPtr& msg_image){
 		}
 	
 		std::stringstream ss;
-		std::string file_name_image("/home/ubuntu/image_data/image");
-		ss << file_name_image << "_" << std::to_string(DATE) << "_" << std::to_string(SET) << "_" << std::to_string(NO) << ".png";
+		std::string file_name_image("/home/ubuntu/increase_data/image");
+		ss << file_name_image << std::to_string(NO) << ".png";
 		cv::imwrite(ss.str(),cv_ptr->image);
 		cv::waitKey(10);
 		judge_camera = 0;
-		//NO+=1;
 	}
 }
 
@@ -107,43 +98,26 @@ void SubPub::callback_init(const std_msgs::Float64MultiArray &init_value){
 	msg_theta.data = init_value.data[2]*pi/180;
 	int TIME = 200;
 	double Vrot;
-	DATE = init_value.data[0]; //220705
-	SET = init_value.data[1]; //01
-	THETA = init_value.data[2]*pi/180;
-	DELTA_THETA = init_value.data[3]*pi/180;
-	NUM = init_value.data[4];
-	X = init_value.data[5];
-	Y = init_value.data[6];
-	std::ofstream writing_file;
-        std::string filename = "/home/ubuntu/text_files/sample.txt";
-        writing_file.open(filename, std::ios::app);
+	DELTA_THETA = init_value.data[0]*pi/180;
+	NUM = init_value.data[1];
 
 	//motor on
 	set_power(1);
 
-	for(i=0;i<=int(NUM);i++){
+	for(i=0;i<int(NUM);i++){
 		//decide motor_speed_freqs
 		Vrot = (THETA+DELTA_THETA*(i)-msg_theta.data)*1000/(double(TIME));
 		freqs.left_hz = -int(400*Vrot/pi);
 		freqs.right_hz = -freqs.left_hz;
-		//imu_offset off
 		pub.publish(msg_theta);
-		//motor start & stop
 		input_raw_freqs(freqs,TIME);
-		//get imu data and image of camera
-		judge_angular = 1;
 		judge_camera = 1;
 		ros::spinOnce();
-		//substitute pre_pose 
 		msg_theta.data = pre_data;
-		//save_data
-		writing_file << DATE<< "\t" << SET <<"\t" << NO << "\t" << X << "\t" << Y << "\t"<< pre_data<<std::endl;
-		NO += 1;
-
+		NO+=1;
 	}
 	//finish motor off and file close
 	set_power(0);
-	writing_file.close();
 	
 }
 

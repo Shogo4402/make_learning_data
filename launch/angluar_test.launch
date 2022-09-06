@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="make_learning_data" name="node1" type="angular_test" required="true" />
+  <node pkg="rt_usb_9axisimu_driver" name="node2" type="rt_usb_9axisimu_driver" required="true" />
+  <node pkg="make_learning_data" name="node3" type="switch_file" required="true" />
+</launch>

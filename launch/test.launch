@@ -1,12 +1,5 @@
 <launch>
   <node pkg="make_learning_data" name="node1" type="making_data" required="true" />
-  <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen">
-        <param name="image_width" value="320"/>
-        <param name="image_height" value="240"/>
-  </node>
-  <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
-        <remap from="image" to="/usb_cam/image_raw"/>
-        <param name="autosize" value="true"/>
-  </node>
-  <node pkg="rt_usb_9axisimu_driver" name="node2" type="rt_usb_9axisimu_driver" required="true" />
+  <node pkg="make_learning_data" name="node2" type="image_movie" required="true" />
+  <node pkg="rt_usb_9axisimu_driver" name="node3" type="rt_usb_9axisimu_driver" required="true" />
 </launch>

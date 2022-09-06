@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="make_learning_data" name="node1" type="many_data" required="true" />
+  <node pkg="make_learning_data" name="node2" type="image_movie" required="true" />
+  <node pkg="make_learning_data" name="node3" type="switch_file2" required="true" />
+</launch>

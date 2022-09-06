@@ -131,8 +131,24 @@ target_link_libraries(making_data ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 add_executable(switch_file src/switch_file.cpp)
 target_link_libraries(switch_file ${catkin_LIBRARIES})
 
-add_executable( getting_image src/getting_image.cpp )
-target_link_libraries( getting_image ${OpenCV_LIBRARIES} )
+add_executable(image_movie src/image_movie.cpp)
+target_link_libraries(image_movie ${catkin_LIBRARIES} ${OpenCV_LIBS})
+
+add_executable(angular_test src/angular_test.cpp)
+target_link_libraries(angular_test ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+
+add_executable(image_movie_get src/image_movie_get.cpp)
+target_link_libraries(image_movie_get ${catkin_LIBRARIES} ${OpenCV_LIBS})
+
+add_executable(increase_data src/increase_data.cpp)
+target_link_libraries(increase_data ${catkin_LIBRARIES} ${OpenCV_LIBS})
+
+add_executable(many_data src/many_data.cpp)
+target_link_libraries(many_data ${catkin_LIBRARIES} ${OpenCV_LIBS})
+
+
+add_executable(switch_file2 src/switch_file2.cpp)
+target_link_libraries(switch_file2 ${catkin_LIBRARIES})
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
